@@ -1,6 +1,12 @@
 # shop_app
 
-A new Flutter application.
+A new Flutter application in which i will design shopping app.
+
+if you have any error during running compileing the code feel free to contact with me.
+Email:
+arslanch585@gmail.com
+Arslan Jameel
+Software Engineer(Android and Flutter)
 
 ## Getting Started
 
