@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 
 class Product with ChangeNotifier {
@@ -18,8 +21,25 @@ class Product with ChangeNotifier {
       required this.imageUrl,
       this.isFavorite = false});
 
-  void toggleFavoriteStatus() {
+  void _favoriteStatus(bool newVaue) {
+    isFavorite = newVaue;
+    notifyListeners();
+  }
+
+  Future<void> toggleFavoriteStatus() async {
+    var oldStatus = isFavorite;
     isFavorite = !isFavorite;
     notifyListeners();
+    final url = Uri.parse(
+        'https://shop-app-flutter-63c7f-default-rtdb.firebaseio.com/products/$id.json');
+    try {
+      final response =
+          await http.patch(url, body: json.encode({'isFavorite': isFavorite}));
+      if (response.statusCode >= 400) {
+        _favoriteStatus(oldStatus);
+      }
+    } catch (error) {
+      _favoriteStatus(oldStatus);
+    }
   }
 }

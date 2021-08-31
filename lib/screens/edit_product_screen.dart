@@ -17,10 +17,16 @@ class _EditProductScreenState extends State<EditProductScreen> {
   final _imageUlrFouseNode = FocusNode();
   final _imageUrlController = TextEditingController();
   final _form = GlobalKey<FormState>();
-  var _editProduct =
-      Product(id: '', title: '', description: '', price: 0.0, imageUrl: '', isFavorite: false);
+  var _editProduct = Product(
+      id: '',
+      title: '',
+      description: '',
+      price: 0.0,
+      imageUrl: '',
+      isFavorite: false);
 
   var _isInit = true;
+  var _isLoading = false;
   var _initValue = {
     'title': '',
     'description': '',
@@ -37,7 +43,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
   @override
   void didChangeDependencies() {
     if (_isInit) {
-      final productId = ModalRoute.of(context)!.settings.arguments as String;
+      final productId = ModalRoute
+          .of(context)!
+          .settings
+          .arguments as String;
 
       if (productId != '') {
         appBarTitle = "Edit Product";
@@ -77,7 +86,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
     }
   }
 
-  void _saveForm() {
+  Future<void> _saveForm() async {
+    setState(() {
+      _isLoading = true;
+    });
     final _isValidate = _form.currentState!.validate();
     if (!_isValidate) {
       return;
@@ -85,12 +97,42 @@ class _EditProductScreenState extends State<EditProductScreen> {
     _form.currentState!.save();
 
     if (_editProduct.id.isNotEmpty) {
-      Provider.of<Products>(context, listen: false)
+     await Provider.of<Products>(context, listen: false)
           .updateProduct(_editProduct.id, _editProduct);
+
     } else {
-      Provider.of<Products>(context, listen: false).addProduct(_editProduct);
+      try {
+        await Provider.of<Products>(context, listen: false)
+            .addProduct(_editProduct);
+      } catch (error) {
+        await showDialog(
+          context: context,
+          builder: (ctx) =>
+              AlertDialog(
+                title: Text('An error occurred!'),
+                content: Text('Something went wrong'),
+                actions: [
+                  FlatButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+
+                      },
+                      child: Text('OK'))
+                ],
+              ),
+        );
+      }
+//      finally {
+//        setState(() {
+//          _isLoading = false;
+//        });
+//        Navigator.of(context).pop();
+//      }
     }
 
+    setState(() {
+      _isLoading = false;
+    });
     Navigator.of(context).pop();
   }
 
@@ -106,7 +148,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
           ),
         ],
       ),
-      body: Padding(
+      body: _isLoading
+          ? Center(
+        child: CircularProgressIndicator(),
+      )
+          : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _form,
@@ -120,7 +166,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   FocusScope.of(context).requestFocus(_priceFouseNode);
                 },
                 validator: (value) {
-                  if (value.toString().isEmpty) {
+                  if (value
+                      .toString()
+                      .isEmpty) {
                     return 'Enter Title';
                   }
                   return null;
@@ -145,7 +193,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   FocusScope.of(context).requestFocus(_desFouseNode);
                 },
                 validator: (value) {
-                  if (value.toString().isEmpty) {
+                  if (value
+                      .toString()
+                      .isEmpty) {
                     return 'Enter price';
                   }
 
@@ -175,7 +225,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 keyboardType: TextInputType.multiline,
                 focusNode: _desFouseNode,
                 validator: (value) {
-                  if (value.toString().isEmpty) {
+                  if (value
+                      .toString()
+                      .isEmpty) {
                     return 'Enter Description';
                   }
                   return null;
@@ -209,11 +261,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
                     child: _imageUrlController.text.isEmpty
                         ? Text('Enter a URL')
                         : FittedBox(
-                            child: Image.network(
-                              _imageUrlController.text,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                      child: Image.network(
+                        _imageUrlController.text,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                   Expanded(
                     child: TextFormField(
@@ -227,7 +279,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
                         _saveForm();
                       },
                       validator: (value) {
-                        if (value.toString().isEmpty) {
+                        if (value
+                            .toString()
+                            .isEmpty) {
                           return 'Enter Image URL';
                         }
 
