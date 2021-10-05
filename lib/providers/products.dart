@@ -9,8 +9,13 @@ import 'product.dart';
 import '../models/http_exception.dart' as Exception;
 
 class Products with ChangeNotifier {
-  final url = Uri.parse(
-      'https://shop-app-flutter-63c7f-default-rtdb.firebaseio.com/products.json');
+  final String authToken;
+  final String userId;
+  var url;
+
+  Products(this.authToken,this.userId,this._items)
+      : url = Uri.parse(
+            'https://shop-app-flutter-63c7f-default-rtdb.firebaseio.com/products.json?auth=$authToken');
   List<Product> _items = [
 //    Product(
 //      id: 'p1',
@@ -63,16 +68,22 @@ class Products with ChangeNotifier {
     return items.firstWhere((prod) => prod.id == id);
   }
 
-  Future<void> fetchAndSetProducts() async {
-
+  Future<void> fetchAndSetProducts([bool filterByUser = false]) async {
+    final filterString = filterByUser ? 'orderBy="creatorId"&equalTo="$userId"' : '';
+    url =  Uri.parse(
+        'https://shop-app-flutter-63c7f-default-rtdb.firebaseio.com/products.json?auth=$authToken&$filterString');
     try {
       final response = await http.get(url);
-      print(response.body);
       final extractedData = json.decode(response.body) as Map<String, dynamic>;
 
       if (extractedData == null) {
         return;
       }
+      url = Uri.parse(
+          'https://shop-app-flutter-63c7f-default-rtdb.firebaseio.com/userFavorites/$userId.json?auth=$authToken');
+      final favoritesResponse = await http.get(url);
+      final responseData = json.decode(favoritesResponse.body);
+      print(favoritesResponse.body);
       final List<Product> loadedProducts = [];
       extractedData.forEach((prodId, prodData) {
         loadedProducts.add(Product(
@@ -80,11 +91,9 @@ class Products with ChangeNotifier {
           title: prodData['title'],
           description: prodData['description'],
           price: prodData['price'],
-          isFavorite: prodData['isFavorite'],
+          isFavorite:responseData == null ? false : responseData[prodId] ?? false,
           imageUrl: prodData['imageUrl'],
         ));
-
-
       });
       _items.clear();
       _items = loadedProducts;
@@ -95,7 +104,8 @@ class Products with ChangeNotifier {
   }
 
   Future<void> addProduct(Product product) async {
-
+    url =  Uri.parse(
+        'https://shop-app-flutter-63c7f-default-rtdb.firebaseio.com/products.json?auth=$authToken');
     try {
       final response = await http.post(
         url,
@@ -104,7 +114,7 @@ class Products with ChangeNotifier {
           'description': product.description,
           'imageUrl': product.imageUrl,
           'price': product.price,
-          'isFavorite': product.isFavorite,
+          'creatorId': userId,
         }),
       );
       final newProduct = Product(
@@ -127,13 +137,14 @@ class Products with ChangeNotifier {
     final prodIndex = _items.indexWhere((prod) => prod.id == id);
     if (prodIndex >= 0) {
       final url = Uri.parse(
-          'https://shop-app-flutter-63c7f-default-rtdb.firebaseio.com/products/$id.json');
-     await http.patch(url, body: json.encode({
-        'title': product.title,
-        'description': product.description,
-        'imageUrl': product.imageUrl,
-        'price': product.price,
-      }));
+          'https://shop-app-flutter-63c7f-default-rtdb.firebaseio.com/products/$id.json?auth=$authToken');
+      await http.patch(url,
+          body: json.encode({
+            'title': product.title,
+            'description': product.description,
+            'imageUrl': product.imageUrl,
+            'price': product.price,
+          }));
       _items[prodIndex] = product;
       notifyListeners();
     } else {
@@ -143,7 +154,7 @@ class Products with ChangeNotifier {
 
   Future<void> deleteProductItem(String id) async {
     final url = Uri.parse(
-        'https://shop-app-flutter-63c7f-default-rtdb.firebaseio.com/products/$id.json');
+        'https://shop-app-flutter-63c7f-default-rtdb.firebaseio.com/products/$id.json?auth=$authToken');
     final existingProductIndex = _items.indexWhere((prod) => prod.id == id);
     var existingProduct = _items[existingProductIndex];
     _items.removeAt(existingProductIndex);
@@ -157,7 +168,7 @@ class Products with ChangeNotifier {
     // ignore: null_check_always_fails
     existingProduct = null!;
   }
-  }
+}
 
 //  void showFavoriteOnly() {
 //    _showFavoriteOnly = true;
@@ -168,4 +179,3 @@ class Products with ChangeNotifier {
 //    _showFavoriteOnly = false;
 //    notifyListeners();
 //  }
-
