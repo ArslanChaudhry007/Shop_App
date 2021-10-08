@@ -10,6 +10,7 @@ import 'package:shop_app/screens/edit_product_screen.dart';
 import 'package:shop_app/screens/order_screen.dart';
 import 'package:shop_app/screens/product_details_screen.dart';
 import 'package:shop_app/screens/product_overview_screen.dart';
+import 'package:shop_app/screens/splash_screen.dart';
 import 'package:shop_app/screens/user_product_screen.dart';
 
 void main() => runApp(MyApp());
@@ -34,9 +35,11 @@ class MyApp extends StatelessWidget {
           create: (ctx) => Cart(),
         ),
         ChangeNotifierProxyProvider<Auth, Order>(
-          create: (ctx) => Order('', []),
-          update: (ctx, auth, perviusOrder) => Order(auth.token.toString(),
-              perviusOrder == null ? [] : perviusOrder.orders),
+          create: (ctx) => Order('', [], ''),
+          update: (ctx, auth, perviusOrder) => Order(
+              auth.token.toString(),
+              perviusOrder == null ? [] : perviusOrder.orders,
+              auth.userId.toString()),
         ),
       ],
       child: Consumer<Auth>(
@@ -47,7 +50,16 @@ class MyApp extends StatelessWidget {
             accentColor: Colors.deepOrange,
             fontFamily: 'Lato',
           ),
-          home: auth.isAuth ? ProductOverViewScreen() : AuthScreen(),
+          home: auth.isAuth
+              ? ProductOverViewScreen()
+              : FutureBuilder(
+                  future: auth.tryAutoLogin(),
+                  builder: (ctx, authResultSnapshot) =>
+                      authResultSnapshot.connectionState ==
+                              ConnectionState.waiting
+                          ? SplashScreen()
+                          : AuthScreen(),
+                ),
           // optional
           //  initialRoute: '/',
           routes: {

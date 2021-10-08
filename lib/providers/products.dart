@@ -99,6 +99,7 @@ class Products with ChangeNotifier {
       _items = loadedProducts;
       notifyListeners();
     } catch (error) {
+      print('fetch and set products error:$error');
       throw (error);
     }
   }
