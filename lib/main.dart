@@ -13,6 +13,8 @@ import 'package:shop_app/screens/product_overview_screen.dart';
 import 'package:shop_app/screens/splash_screen.dart';
 import 'package:shop_app/screens/user_product_screen.dart';
 
+import 'helpers/custom_route.dart';
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -49,6 +51,12 @@ class MyApp extends StatelessWidget {
             primarySwatch: Colors.purple,
             accentColor: Colors.deepOrange,
             fontFamily: 'Lato',
+            // pageTransitionsTheme: PageTransitionsTheme(
+            //   builders: {
+            //     TargetPlatform.android: CustomPageTransitionBuilder(),
+            //     TargetPlatform.iOS: CustomPageTransitionBuilder(),
+            //   },
+            // ),
           ),
           home: auth.isAuth
               ? ProductOverViewScreen()
